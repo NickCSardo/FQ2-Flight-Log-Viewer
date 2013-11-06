@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>GE FQ2</title>
+<style>
+    html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+    }
+    #panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        margin-left: -180px;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+    }
+
+    .overlay {
+        position: absolute;
+        right: 30px;
+        top: 23px;
+        width: 440px;
+    }
+    .sidebar-item{
+        font-size: small;
+        display: block;
+        height: auto;
+        background-color: lightcyan;
+        border: 1px solid darkgray;
+        margin-top: 10px;
+    }
+    .graph {
+        height: 204px;
+    }
+    .graph svg {
+        float: right;
+    }
+    table {
+        text-align: center;
+    }
+    .colorIcon{
+        width:14px;
+        height:14px;
+        display:inline-block;
+        margin-right: 5px;
+    }
+    tr.selectedRow td {
+        background-color: lightyellow !important;
+    }
+    #logComparison {
+        position: absolute;
+        top: 23px;
+        left: 90px;
+        background-color: lightcyan;
+        border: 1px solid darkgray;
+        width: 900px;
+        height: auto;
+        display: none;
+    }
+    #logComparison table {
+        margin-bottom: 0px;
+    }
+
+    .delta {
+        padding-left: 10px;
+        font-size: smaller;
+    }
+    .lower {
+        color: green;
+    }
+    .higher {
+        color: red;
+    }
+</style>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization,geometry"></script>
+
+    <script src="lib/app.js" charset="utf-8"></script>
+    <script src="lib/jquery-2.0.3.min.js" charset="utf-8"></script>
+    <script src="lib/queue.min.js" charset="utf-8"></script>
+    <script src="lib/lodash.compat.js" charset="utf-8"></script>
+    <script src="lib/d3.js" charset="utf-8"></script>
+    <script src="lib/nv.d3.js" charset="utf-8"></script>
+    <script src="lib/helpers.js" charset="utf-8"></script>
+
+    <link href="css/nv.d3.css" rel="stylesheet" type="text/css">
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+    <script>
+        // Adding 500 Data Points
+        var map, pointarray, heatmap;
+
+        function initialize() {
+            var mapOptions = {
+                zoom: 5,
+                center: new google.maps.LatLng(39.8333, -88.4167),
+                disableDefaultUI:false,
+                mapTypeId: google.maps.MapTypeId.TERRAIN
+            };
+
+            map = new google.maps.Map(document.getElementById('map-canvas'),
+                    mapOptions);
+        }
+
+        google.maps.visualRefresh = true;
+        google.maps.event.addDomListener(window, 'load', initialize);
+
+        initiateLoad();
+    </script>
+</head>
+<body>
+<div id="map-canvas"></div>
+<div id="logComparison" class="sidebar-item"> </div>
+<div id="sidebar" class="overlay">
+    <div id="flights" class="sidebar-item" style="height: 150px; overflow-y: scroll;">
+    </div>
+    <div id="graphs" style="display: none;">
+        <div id="altitude" class="sidebar-item graph no-overflow">
+            <svg></svg>
+        </div>
+        <div id="fuel" class="sidebar-item graph" no-overflow>
+            <svg></svg>
+        </div>
+        <div id="airspeed" class="sidebar-item graph" no-overflow>
+            <svg></svg>
+        </div>
+        <div id="groundspeed" class="sidebar-item graph" no-overflow>
+            <svg></svg>
+        </div>
+        <!--<div id="weight" class="sidebar-item graph">-->
+            <!--<svg></svg>-->
+        <!--</div>-->
+    </div>
+</div>
+
+
+<script type="text/template" id="flightListTemplate">
+    <div class="table-scroll">
+        <table class="table table-striped table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>FlightId</th>
+                <th>Distance Remaining</th>
+                <th>Destination</th>
+                <!--<th>ScheduledArrival</th>-->
+                <th>Passengers</th>
+                <!--<th>Fuel Cost</th>-->
+                <!--<th>Crew Delay Cost</th>-->
+                <!--<th>Other Hourly Costs</th>-->
+            </tr>
+            </thead>
+            <tbody>
+            <% _.each(flights, function(f,i) { %>
+            <tr>
+                <td><%= f.FlightId %></td>
+                <td><%= (f.DistanceToDestination / 1609.34).toFixed(0) %> miles</td>
+                <td><%= f.Destination %></td>
+                <!--<td><%= f.ScheduledArrivalTime.toLocaleString() %></td>-->
+                <td><%= (f.StandardPassengerCount + f.PremiumPassengerCount) %></td>
+                <!--<td><%= f.FuelCost %></td>-->
+                <!--<td><%= f.CrewDelayCost %></td>-->
+                <!--<td><%= f.OtherHourlyCosts %></td>-->
+            </tr>
+            <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <p><%= flights.length %> flights listed</p>
+</script>
+
+<script type="text/template" id="comparisonListTemplate">
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+        <tr>
+            <th>Flight Rank</th>
+            <th>Competitor</th>
+            <th>Delay Cost</th>
+            <th>Fuel Cost</th>
+            <th>Turbulence Cost</th>
+            <th>Oscillation Cost</th>
+            <th>Total Cost</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% _.each(costs, function(c,i) { %>
+        <tr>
+            <td><%= (i+1) %></td>
+            <td><div class='colorIcon' style="background-color: <%= c.color %>;"></div><%= c.Competitor %></td>
+            <td><%= c.DelayCost.toFixed(2) %>
+                <% if(i > 0 && costs[0].DelayCost > 0){ %>
+                <% if( deltaPercent(c.DelayCost, costs[0].DelayCost) >= 0) { %>
+                <span class="delta higher">+<%=  deltaPercent(c.DelayCost, costs[0].DelayCost).toFixed(2) %>%</span>
+                <% } else { %>
+                <span class="delta lower"><%=  deltaPercent(c.DelayCost, costs[0].DelayCost).toFixed(2) %>%</span>
+                <% } %>
+                <% } %>
+            </td>
+            <td><%= c.FuelCost.toFixed(2) %>
+                <% if(i > 0 && costs[0].FuelCost > 0){ %>
+                <% if(deltaPercent(c.FuelCost, costs[0].FuelCost) >= 0) { %>
+                <span class="delta higher">+<%= deltaPercent(c.FuelCost, costs[0].FuelCost).toFixed(2) %>%</span>
+                <% } else { %>
+                <span class="delta lower"><%= deltaPercent(c.FuelCost, costs[0].FuelCost).toFixed(2) %>%</span>
+                <% } %>
+                <% } %>
+            </td>
+            <td><%= c.TurbulenceCost.toFixed(2) %>
+                <% if(i > 0 && costs[0].TurbulenceCost > 0){ %>
+                <% if(deltaPercent(c.TurbulenceCost, costs[0].TurbulenceCost) >= 0) { %>
+                <span class="delta higher">+<%= deltaPercent(c.TurbulenceCost, costs[0].TurbulenceCost).toFixed(2) %>%</span>
+                <% } else { %>
+                <span class="delta lower"><%= deltaPercent(c.TurbulenceCost, costs[0].TurbulenceCost).toFixed(2) %>%</span>
+                <% } %>
+                <% } %>
+            </td>
+            <td><%= c.OscillationCost.toFixed(2) %>
+                <% if(i > 0 && costs[0].OscillationCost > 0){ %>
+                <% if(deltaPercent(c.OscillationCost, costs[0].OscillationCost) >= 0) { %>
+                <span class="delta higher">+<%= deltaPercent(c.OscillationCost, costs[0].OscillationCost).toFixed(2) %>%</span>
+                <% } else { %>
+                <span class="delta lower"><%= deltaPercent(c.OscillationCost, costs[0].OscillationCost).toFixed(2) %>%</span>
+                <% } %>
+                <% } %>
+            </td>
+            <td><%= c.TotalCost.toFixed(2) %>
+                <% if(i > 0 && costs[0].TotalCost > 0){ %>
+                <% if(deltaPercent(c.TotalCost, costs[0].TotalCost) >= 0) { %>
+                <span class="delta higher">+<%= deltaPercent(c.TotalCost, costs[0].TotalCost).toFixed(2) %>%</span>
+                <% } else { %>
+                <span class="delta lower"><%= deltaPercent(c.TotalCost, costs[0].TotalCost).toFixed(2) %>%</span>
+                <% } %>
+                <% } %>
+            </td>
+        </tr>
+        <% }); %>
+        </tbody>
+    </table>
+</script>
+
+</body>
+</html>
