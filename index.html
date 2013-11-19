@@ -212,7 +212,7 @@
         <thead>
         <tr>
             <th>Flight Rank</th>
-            <th>Competitor</th>
+          <!--  <th>Competitor</th>   -->
             <th>Delay Cost</th>
             <th>Fuel Cost</th>
             <th>Turbulence Cost</th>
@@ -224,7 +224,7 @@
         <% _.each(costs, function(c,i) { %>
         <tr>
             <td><%= (i+1) %></td>
-            <td><div class='colorIcon' style="background-color: <%= c.color %>;"></div><%= c.Competitor %></td>
+           <!-- <td><div class='colorIcon' style="background-color: <%= c.color %>;"></div><%= c.Competitor %></td>     -->
             <td><%= c.DelayCost.toFixed(2) %>
                 <% if(i > 0 && costs[0].DelayCost > 0){ %>
                 <% if( deltaPercent(c.DelayCost, costs[0].DelayCost) >= 0) { %>
