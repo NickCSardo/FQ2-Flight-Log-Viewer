@@ -64,7 +64,18 @@
         width: 600px;
         height: auto;
     }
-
+    #flights{
+        position: absolute;
+        top: 23px;
+        left: 1000px;
+        height: 200px;
+        overflow-y: scroll;
+        font-size: small;
+        display: block;
+        background-color: lightcyan;
+        border: 1px solid darkgray;
+        margin-top: 10px;
+    }
     .file {
         width: 500px;
     }
@@ -138,6 +149,8 @@
             processLogsAndCosts(_.find(files, {name:'log'}).values, _.find(files, {name:'costs'}).values);
             // Flight List
             setupFlightList();
+            $('#file-uploader').hide();
+            $('#flights').show();
             $('#sidebar').show();
         }
     </script>
@@ -150,9 +163,9 @@
     <input id="load-button" type="button" value="Load Data" />
 </div>
 <div id="logComparison"> </div>
+<div id="flights" style="display: none;">
+</div>
 <div id="sidebar" class="overlay" style="display: none;">
-    <div id="flights" class="sidebar-item" style="height: 150px; overflow-y: scroll;">
-    </div>
     <div id="graphs" style="display: none;">
         <div id="altitude" class="sidebar-item graph no-overflow">
             <svg></svg>
