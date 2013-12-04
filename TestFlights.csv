@@ -1,5 +1,4 @@
 FlightHistoryId,CutoffTime,ArrivalAirport,ScheduledArrivalTime,CurrentLatitude,CurrentLongitude,CurrentAltitude,CurrentGroundSpeed,StandardPassengerCount,PremiumPassengerCount,FuelRemainingPounds,FuelCost,CrewDelayCost,OtherHourlyCosts,NonarrivalPenalty,DelayCostProportion30m,DelayCostProportion2h,MaxStandardDelayCost,MaxPremiumDelayCost,FreeAltitudeChanges,AltitudeChangeCost,TurbulenceCostPer6Minutes
-
 308567953,2013-09-10 18:03:53+00:00,KHOU,2013-09-10 19:05:00+00:00,31.280001,-99.629997,37000,486,109,15,14758.790278,2.91,671.88,1086.06,100000.00,0.054,0.433,8.45,143.04,5,100.00,40.00
 308567955,2013-09-10 18:03:53+00:00,KIAD,2013-09-10 19:44:00+00:00,36.279999,-89.900002,31000,458,111,14,19987.956944,4.24,432.51,1806.20,100000.00,0.161,0.511,38.57,174.54,5,100.00,40.00
 308567956,2013-09-10 18:03:53+00:00,KIAH,2013-09-10 18:50:00+00:00,32.400002,-101.930000,35000,492,134,15,16133.790278,4.91,312.83,1666.26,100000.00,0.069,0.551,14.63,190.30,5,100.00,40.00
